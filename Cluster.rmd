@@ -1,0 +1,105 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+# Ben Robison
+## Mod6- Clustering
+
+```{r}
+library(tidyverse)
+library(cluster)
+library(factoextra)
+library(dendextend)
+```
+
+```{r}
+trucks <- read_csv("trucks.csv")
+View(trucks)
+```
+
+```{r}
+ggplot(trucks, aes(x=Distance, y=Speeding))+
+  geom_point()
+```
+
+Clear clustering, trend seems to be more distance, more likely to speed a higher percentage of time. 
+
+```{r}
+truck2 = select(trucks, -Driver_ID) 
+truck2 = as.data.frame(scale(truck2)) 
+```
+
+```{r}
+set.seed(1234)
+clusters1 <- kmeans(truck2, 2)
+fviz_cluster(clusters1, truck2)
+```
+Clustered as expected, 3820 in middle might be issue. 2 clusters seems appropriate though 3 could be better for top right side.
+
+```{r}
+set.seed(123)
+fviz_nbclust(truck2, kmeans, method = "wss")
+```
+
+```{r}
+set.seed(123)
+fviz_nbclust(truck2, kmeans, method = "silhouette")
+```
+Yes the 3 to 4 range appears to be the optimal number of clusters
+```{r}
+set.seed(1234)
+clusters2 <- kmeans(truck2, 4)
+fviz_cluster(clusters2, truck2)
+```
+
+Clusters 1 and 2 are most likely people who speed rarely if at all. While cluster 3 is people who speed consistenly for a long duration, similar to cluster 4 who speed consistenly for a short duration. 3 and 4 would probably have some overlap if data was taken more than once for each driver.
+
+```{r}
+wine <- read_csv("wineprice.csv")
+View(wine)
+wine2 = wine %>% select(c(-Year, -FrancePop)) 
+wine2 =as_data_frame(scale(wine2))
+```
+
+```{r}
+set.seed(123)
+fviz_nbclust(wine2, kmeans, method = "wss")
+```
+```{r}
+set.seed(123)
+fviz_nbclust(wine2, kmeans, method = "silhouette")
+```
+WSS method seems to favor closer to 4 while silhouette method favors closer to 5 it appears.
+
+```{r}
+set.seed(1234)
+clusters3 <- kmeans(wine2, 5)
+fviz_cluster(clusters3, wine2)
+```
+
+```{r}
+m = c( "average", "single", "complete", "ward")
+names(m) = c( "average", "single", "complete", "ward")
+
+ac = function(x) {
+  agnes(wine2, method = x)$ac
+}
+map_dbl(m, ac)
+```
+
+```{r}
+hc = agnes(wine2, method = "ward")
+pltree(hc, cex = 0.6, hang = -1, main = "Agglomerative Dendrogram") 
+plot(hc, cex.axis= 0.5) 
+rect.hclust(hc, k = 5, border = 2:6) 
+
+```
+
+```{r}
+hc2 = diana(wine2)
+pltree(hc2, cex = 0.6, hang = -1, main = "Divisive Dendrogram") 
+plot(hc2, cex.axis= 0.5) 
+rect.hclust(hc2, k = 5, border = 2:6) 
+```
+
